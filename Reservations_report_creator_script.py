@@ -24,24 +24,25 @@ import csv
 ############################
 ######## time data #########
 ############################
+months_diff = 6
 # unix time of current time
 now_time = int(time.time())
 # unix time of time in the past (current 6 months ago)
-past_time = int((datetime.today() + relativedelta(months=-6)).timestamp())
+past_time = int((datetime.today() + relativedelta(months=-months_diff)).timestamp())
 ############################
 
 ############################
 ######## file data #########
 ############################
 path = "C:\\idan\\to delete\\"
-file_name = "Reservations Summary - last 6 months (New_Format)"
+file_name = "Reservations Summary - last " + months_diff + " months (New_Format)"
 
 ############################
 ## portal DB Query's data ##
 ############################
-header_data = ['User Name', 'Manager', 'Region', 'Location', 'Department', 'ASE', 'Reservations Total Count'
+header_data = ['User Name', 'Manager', 'Region', 'Location', 'Department', 'ASE', 'Reservations Total Count',
                'Alteon and Analytics', 'Last Reservation', 'Alteon Ansible Automation', 'Last Reservation', 'Alteon Cloud Controller', 'Last Reservation', 'Virtual DefensePro', 'Last Reservation', 'SSL Inspection', 'Last Reservation',
-               'Appwall', 'Last Reservation', 'Defense Flow', 'Last Reservation', 'KWAF - ExtAuth', 'Last Reservation', 'KWAF - Inline Mode', 'Last Reservation', 'Alteon GEL Automation''Last Reservation']
+               'Appwall', 'Last Reservation', 'Defense Flow', 'Last Reservation', 'KWAF - ExtAuth', 'Last Reservation', 'KWAF - Inline Mode', 'Last Reservation', 'Alteon GEL Automation', 'Last Reservation']
 summary_report_query = str(
     "SELECT" +
     " Employees.Full_Name AS 'User Name', Employees.Manager, Employees.Region, Employees.Location, Employees.Department, IF(Employees.ASE = 1, 'YES', 'NO') AS 'ASE', COUNT(Reservations.VMName) AS 'Reservations Total Count'," +
@@ -85,8 +86,6 @@ print(summary_report_query)
 ############################
 
 
-
-
 # getarg to add later
 # def GetArgs():
 #    """
@@ -110,8 +109,6 @@ print(summary_report_query)
 
 def save_csv_file(data, header, path, file_name):
     # open the file in the write mode
-    f = open(path + file_name, 'w')
-    # open the file in the write mode
     with open(path + file_name + ".csv", 'w', newline='') as f:
         writer = csv.writer(f)
 
@@ -120,6 +117,7 @@ def save_csv_file(data, header, path, file_name):
 
         # write multiple rows
         writer.writerows(data)
+
 
 # established connection to required DB and return cursor
 def get_db_connection(host, db, user, password):
@@ -155,9 +153,8 @@ def get_portal_db_data(mysql_connection, query):
             print("MySQL connection is closed")
 
 
-
 if __name__ == '__main__':
-    #get arguments
+    # get arguments
     args = sys.argv[1:]
     portal_ip = args[0]
     portal_db_name = args[1]
@@ -168,5 +165,5 @@ if __name__ == '__main__':
     db_connection = get_db_connection(portal_ip, portal_db_name, portal_usr, portal_pass)
     query_data = get_portal_db_data(mysql_connection=db_connection, query=summary_report_query)
     save_csv_file(query_data, header_data, path, file_name)
+    print("script finished successfully")
     # print(get_portal_db_data(cursor))
-    pass
