@@ -40,7 +40,7 @@ file_name = "Reservations_Summary-last_" + str(months_diff) + "_months"
 ############################
 ## portal DB Query's data ##
 ############################
-header_data = ['User Name', 'Manager', 'Region', 'Location', 'Department', 'ASE', 'Reservations Total Count',
+header_data = ['User Name', 'Manager', 'Region', 'Location', 'Reservations Total Count',
                'Alteon and Analytics', 'Last Reservation', 'Alteon Ansible Automation', 'Last Reservation', 'Alteon Cloud Controller', 'Last Reservation', 'Virtual DefensePro', 'Last Reservation', 'SSL Inspection', 'Last Reservation',
                'Appwall', 'Last Reservation', 'Defense Flow', 'Last Reservation', 'KWAF - ExtAuth', 'Last Reservation', 'KWAF - Inline Mode', 'Last Reservation', 'Alteon GEL Automation', 'Last Reservation']
 # summary_report_query = str(
