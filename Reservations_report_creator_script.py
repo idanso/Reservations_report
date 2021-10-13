@@ -84,63 +84,64 @@ header_data = ['User Name', 'Manager', 'Region', 'Location', 'Department', 'ASE'
 #     " Group by Full_Name, Manager, Region, Location, Department, Reservations.Email, ASE;")
 
 summary_report_query = str(
-    "SELECT" +
-    "Employees.Full_Name, Employees.Manager, Employees.Region, Employees.Location, COUNT(Reservations.VMName) AS 'Reservations Total Count'," +
-    "IF(AAAnalytics_col.Count IS NULL, 0, AAAnalytics_col.Count) AS 'Alteon and Analytics', IF(AAAnalytics_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(AAAnalytics_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'," +
-    "IF(AAAutomation_col.Count IS NULL, 0, AAAutomation_col.Count) AS 'Alteon Ansible Automation', IF(AAAutomation_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(AAAutomation_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'," +
-    "IF(ACController_col.Count IS NULL, 0, ACController_col.Count) AS 'Alteon Cloud Controller', IF(ACController_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(ACController_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'," +
-    "IF(VDP_col.Count IS NULL, 0, VDP_col.Count) AS 'Virtual DefensePro', IF(VDP_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(VDP_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'," +
-    "IF(SSLI_col.Count IS NULL, 0, SSLI_col.Count) AS 'SSL Inspection', IF(SSLI_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(SSLI_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'," +
-    "IF(APPW_col.Count IS NULL, 0, APPW_col.Count) AS 'Appwall', IF(APPW_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(APPW_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'," +
-    "IF(DF_col.Count IS NULL, 0, DF_col.Count) AS 'Defense Flow', IF(DF_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(DF_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'," +
-    "IF(KWAFEA_col.Count IS NULL, 0, KWAFEA_col.Count) AS 'KWAF - ExtAuth', IF(KWAFEA_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(KWAFEA_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'," +
-    "vIF(KWAFIM_col.Count IS NULL, 0, KWAFIM_col.Count) AS 'KWAF - Inline Mode', IF(KWAFIM_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(KWAFIM_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'," +
-    "IF(GEL_col.Count IS NULL, 0, GEL_col.Count) AS 'Global Elastic License (GEL)', IF(GEL_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(GEL_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'" +
-    "FROM" +
-    "Employees" +
-    "LEFT JOIN" +
-    "Reservations ON Reservations.Email = Employees.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Alteon and Analytics' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS AAAnalytics_col ON Reservations.Email = AAAnalytics_col.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'Alteon and Analytics' GROUP BY Email) AS AAAnalytics_col2 ON Reservations.Email = AAAnalytics_col2.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Alteon Ansible Automation' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS AAAutomation_col ON Reservations.Email = AAAutomation_col.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'Alteon Ansible Automation' GROUP BY Email) AS AAAutomation_col2 ON Reservations.Email = AAAutomation_col2.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab IN ('Alteon Cloud Controller', 'Alteon Cloud Controller - Demo', 'Alteon Cloud Controller - Training') AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS ACController_col ON Reservations.Email = ACController_col.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab IN ('Alteon Cloud Controller', 'Alteon Cloud Controller - Demo', 'Alteon Cloud Controller - Training') GROUP BY Email) AS ACController_col2 ON Reservations.Email = ACController_col2.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Virtual DefensePro' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS VDP_col ON Reservations.Email = VDP_col.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'Virtual DefensePro' GROUP BY Email) AS VDP_col2 ON Reservations.Email = VDP_col2.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'SSL Inspection' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS SSLI_col ON Reservations.Email = SSLI_col.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'SSL Inspection' GROUP BY Email) AS SSLI_col2 ON Reservations.Email = SSLI_col2.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Appwall' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS APPW_col ON Reservations.Email = APPW_col.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'Appwall' GROUP BY Email) AS APPW_col2 ON Reservations.Email = APPW_col2.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Defense Flow' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS DF_col ON Reservations.Email = DF_col.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'Defense Flow' GROUP BY Email) AS DF_col2 ON Reservations.Email = DF_col2.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab IN ('KWAF - ExtAuth', 'KWAF - External Authorization Mode') AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS KWAFEA_col ON Reservations.Email = KWAFEA_col.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab IN ('KWAF - ExtAuth', 'KWAF - External Authorization Mode') GROUP BY Email) AS KWAFEA_col2 ON Reservations.Email = KWAFEA_col2.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'KWAF - Inline Mode' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS KWAFIM_col ON Reservations.Email = KWAFIM_col.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'KWAF - Inline Mode' GROUP BY Email) AS KWAFIM_col2 ON Reservations.Email = KWAFIM_col2.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab IN ('Global Elastic License (GEL)', 'Alteon GEL Automation') AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS GEL_col ON Reservations.Email = GEL_col.Email" +
-    "LEFT JOIN" +
-    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab IN ('Global Elastic License (GEL)', 'Alteon GEL Automation') GROUP BY Email) AS GEL_col2 ON Reservations.Email = GEL_col2.Email" +
+    "SELECT\n" +
+    "Employees.Full_Name, Employees.Manager, Employees.Region, Employees.Location, COUNT(Reservations.VMName) AS 'Reservations Total Count',\n" +
+    "IF(AAAnalytics_col.Count IS NULL, 0, AAAnalytics_col.Count) AS 'Alteon and Analytics', IF(AAAnalytics_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(AAAnalytics_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
+    "IF(AAAutomation_col.Count IS NULL, 0, AAAutomation_col.Count) AS 'Alteon Ansible Automation', IF(AAAutomation_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(AAAutomation_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
+    "IF(ACController_col.Count IS NULL, 0, ACController_col.Count) AS 'Alteon Cloud Controller', IF(ACController_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(ACController_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
+    "IF(VDP_col.Count IS NULL, 0, VDP_col.Count) AS 'Virtual DefensePro', IF(VDP_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(VDP_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
+    "IF(SSLI_col.Count IS NULL, 0, SSLI_col.Count) AS 'SSL Inspection', IF(SSLI_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(SSLI_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
+    "IF(APPW_col.Count IS NULL, 0, APPW_col.Count) AS 'Appwall', IF(APPW_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(APPW_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
+    "IF(DF_col.Count IS NULL, 0, DF_col.Count) AS 'Defense Flow', IF(DF_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(DF_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
+    "IF(KWAFEA_col.Count IS NULL, 0, KWAFEA_col.Count) AS 'KWAF - ExtAuth', IF(KWAFEA_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(KWAFEA_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
+    "IF(KWAFIM_col.Count IS NULL, 0, KWAFIM_col.Count) AS 'KWAF - Inline Mode', IF(KWAFIM_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(KWAFIM_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
+    "IF(GEL_col.Count IS NULL, 0, GEL_col.Count) AS 'Global Elastic License (GEL)', IF(GEL_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(GEL_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'\n" +
+    "FROM\n" +
+    "Employees\n" +
+    "LEFT JOIN\n" +
+    "Reservations ON Reservations.Email = Employees.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Alteon and Analytics' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS AAAnalytics_col ON Reservations.Email = AAAnalytics_col.Email\n" +
+    "LEFT JOIN\n"+
+    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'Alteon and Analytics' GROUP BY Email) AS AAAnalytics_col2 ON Reservations.Email = AAAnalytics_col2.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Alteon Ansible Automation' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS AAAutomation_col ON Reservations.Email = AAAutomation_col.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'Alteon Ansible Automation' GROUP BY Email) AS AAAutomation_col2 ON Reservations.Email = AAAutomation_col2.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab IN ('Alteon Cloud Controller', 'Alteon Cloud Controller - Demo', 'Alteon Cloud Controller - Training') AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS ACController_col ON Reservations.Email = ACController_col.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab IN ('Alteon Cloud Controller', 'Alteon Cloud Controller - Demo', 'Alteon Cloud Controller - Training') GROUP BY Email) AS ACController_col2 ON Reservations.Email = ACController_col2.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Virtual DefensePro' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS VDP_col ON Reservations.Email = VDP_col.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'Virtual DefensePro' GROUP BY Email) AS VDP_col2 ON Reservations.Email = VDP_col2.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'SSL Inspection' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS SSLI_col ON Reservations.Email = SSLI_col.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'SSL Inspection' GROUP BY Email) AS SSLI_col2 ON Reservations.Email = SSLI_col2.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Appwall' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS APPW_col ON Reservations.Email = APPW_col.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'Appwall' GROUP BY Email) AS APPW_col2 ON Reservations.Email = APPW_col2.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Defense Flow' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS DF_col ON Reservations.Email = DF_col.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'Defense Flow' GROUP BY Email) AS DF_col2 ON Reservations.Email = DF_col2.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab IN ('KWAF - ExtAuth', 'KWAF - External Authorization Mode') AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS KWAFEA_col ON Reservations.Email = KWAFEA_col.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab IN ('KWAF - ExtAuth', 'KWAF - External Authorization Mode') GROUP BY Email) AS KWAFEA_col2 ON Reservations.Email = KWAFEA_col2.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'KWAF - Inline Mode' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS KWAFIM_col ON Reservations.Email = KWAFIM_col.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab = 'KWAF - Inline Mode' GROUP BY Email) AS KWAFIM_col2 ON Reservations.Email = KWAFIM_col2.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab IN ('Global Elastic License (GEL)', 'Alteon GEL Automation') AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS GEL_col ON Reservations.Email = GEL_col.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, Max(Start) AS Last_Res FROM Reservations WHERE Lab IN ('Global Elastic License (GEL)', 'Alteon GEL Automation') GROUP BY Email) AS GEL_col2 ON Reservations.Email = GEL_col2.Email\n" +
     "Group by Full_Name, Manager, Region, Location, Reservations.Email;")
+print("Query to execute:\n" + summary_report_query)
 ############################
 
 
@@ -222,8 +223,13 @@ if __name__ == '__main__':
 
     # portal DB connection data
     db_connection = get_db_connection(portal_ip, portal_db_name, portal_usr, portal_pass)
-    query_data = get_portal_db_data(mysql_connection=db_connection, query=summary_report_query)
-    # print(query_data)
-    save_csv_file(query_data, header_data, path, file_name + "-" + site)
-    print("script finished successfully")
-    # print(get_portal_db_data(cursor))
+    if db_connection:
+        query_data = get_portal_db_data(mysql_connection=db_connection, query=summary_report_query)
+        if query_data:
+            # print(query_data)
+            save_csv_file(query_data, header_data, path, file_name + "-" + site)
+            print("script finished successfully")
+        else:
+            print("Error in MySQL query")
+    else:
+        print("Error in MySQL Connection")
