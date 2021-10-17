@@ -24,9 +24,11 @@ import csv
 ############################
 ######## time data #########
 ############################
+
 months_diff = 6
 # unix time of current time
 now_time = int(time.time())
+
 # unix time of time in the past (current 6 months ago)
 past_time = int((datetime.today() + relativedelta(months=-months_diff)).timestamp())
 ############################
@@ -34,6 +36,7 @@ past_time = int((datetime.today() + relativedelta(months=-months_diff)).timestam
 ############################
 ######## file data #########
 ############################
+
 path = "C:\\inetpub\\FTP_Folder\\"
 file_name = "Reservations_Summary-last_" + str(months_diff) + "_months"
 
@@ -85,7 +88,7 @@ header_data = ['User Name', 'Manager', 'Region', 'Location', 'Reservations Total
 
 summary_report_query = str(
     "SELECT\n" +
-    "Employees.Full_Name, Employees.Manager, Employees.Region, Employees.Location, COUNT(Reservations.VMName) AS 'Reservations Total Count',\n" +
+    "Employees.Full_Name, Employees.Manager, Employees.Region, Employees.Location, total_by_time.Count AS 'Reservations Total Count',\n" +
     "IF(AAAnalytics_col.Count IS NULL, 0, AAAnalytics_col.Count) AS 'Alteon and Analytics', IF(AAAnalytics_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(AAAnalytics_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
     "IF(AAAutomation_col.Count IS NULL, 0, AAAutomation_col.Count) AS 'Alteon Ansible Automation', IF(AAAutomation_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(AAAutomation_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
     "IF(ACController_col.Count IS NULL, 0, ACController_col.Count) AS 'Alteon Cloud Controller', IF(ACController_col2.Last_Res IS NULL, '', DATE_FORMAT(MAX(ACController_col2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation',\n" +
@@ -100,6 +103,8 @@ summary_report_query = str(
     "Employees\n" +
     "LEFT JOIN\n" +
     "Reservations ON Reservations.Email = Employees.Email\n" +
+    "LEFT JOIN\n" +
+    "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS total_by_time ON Reservations.Email = total_by_time.Email\n" +
     "LEFT JOIN\n" +
     "(SELECT Email, COUNT(VMName) AS Count FROM Reservations WHERE Lab = 'Alteon and Analytics' AND Start BETWEEN FROM_UNIXTIME(" + str(past_time) + ") AND FROM_UNIXTIME(" + str(now_time) + ") GROUP BY Email) AS AAAnalytics_col ON Reservations.Email = AAAnalytics_col.Email\n" +
     "LEFT JOIN\n"+
@@ -199,9 +204,11 @@ def get_db_connection(host, db, user, password):
 def get_portal_db_data(mysql_connection, query):
     try:
         mysql_cursor = mysql_connection.cursor()
-        mysql_cursor.execute(query)
-        record = mysql_cursor.fetchall()
-        return list(record)
+        if mysql_cursor:
+            mysql_cursor.execute(query)
+            record = mysql_cursor.fetchall()
+            return list(record)
+        return 0
 
     except Error as e:
         print("Error while connecting to MySQL", e)
