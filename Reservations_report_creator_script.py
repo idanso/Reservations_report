@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import csv
+import pandas as pd
 
 
 #####################################
@@ -148,25 +149,97 @@ def get_portal_db_data(mysql_connection, query):
             print("MySQL connection is closed")
 
 
-if __name__ == '__main__':
-    #get arguments
-    args = sys.argv[1:]
-    portal_ip = args[0]
-    portal_db_name = args[1]
-    portal_usr = args[2]
-    portal_pass = args[3]
-    site = args[4]
+def merge_queries_data(df_nj, df_de):
+    # import data
+    df_nj = pd.read_csv("/usr/data/Reservations_Summary-last_6_months-NJ.csv", encoding="ISO-8859-1")
+    df_de = pd.read_csv('/usr/data/Reservations_Summary-last_6_months-DE.csv', encoding="ISO-8859-1")
 
-    # portal DB connection data
-    db_connection = get_db_connection(portal_ip, portal_db_name, portal_usr, portal_pass)
+    # fix data types of last reservations to datetime
+    last_reservations_col_lst = ['Last Reservation', 'Last Reservation.1', 'Last Reservation.2',
+                                 'Last Reservation.3', 'Last Reservation.4', 'Last Reservation.5', 'Last Reservation.6',
+                                 'Last Reservation.7',
+                                 'Last Reservation.8', 'Last Reservation.9']
+
+    for col in last_reservations_col_lst:
+        df_nj[col] = pd.to_datetime(df_nj[col])
+        df_de[col] = pd.to_datetime(df_de[col])
+
+    # set size of dataframe output to max
+    pd.set_option("display.max_rows", None, "display.max_columns", None)
+
+    # merge the 2 data frames
+    df_merge = pd.concat([df_nj, df_de])
+
+    # create 2 data frames for each data type (int, date) and group them by 'User Name'
+    df_merge_count = df_merge.groupby('User Name')[
+        ['Manager', 'Region', 'Location', 'Reservations Total Count', 'Alteon and Analytics',
+         'Alteon Ansible Automation', 'Alteon Cloud Controller', 'Virtual DefensePro', 'SSL Inspection', 'Appwall',
+         'Defense Flow', 'KWAF - ExtAuth', 'KWAF - Inline Mode', 'Alteon GEL Automation']].sum()
+    df_merge_last_reservations = df_merge.groupby('User Name')[
+        ['Manager', 'Region', 'Location', 'Last Reservation', 'Last Reservation.1', 'Last Reservation.2',
+         'Last Reservation.3', 'Last Reservation.4', 'Last Reservation.5', 'Last Reservation.6', 'Last Reservation.7',
+         'Last Reservation.8', 'Last Reservation.9']].max()
+
+    # merge the 2 data frames and arrange the columns as the original data frame
+    df_merge_full = df_merge_last_reservations.merge(df_merge_count, how='left', on='User Name')
+    df_merge_full = df_merge_full[
+        ['Manager', 'Region', 'Location', 'Reservations Total Count', 'Alteon and Analytics', 'Last Reservation',
+         'Alteon Ansible Automation', 'Last Reservation.1', 'Alteon Cloud Controller', 'Last Reservation.2',
+         'Virtual DefensePro', 'Last Reservation.3', 'SSL Inspection', 'Last Reservation.4', 'Appwall',
+         'Last Reservation.5', 'Defense Flow', 'Last Reservation.6', 'KWAF - ExtAuth', 'Last Reservation.7',
+         'KWAF - Inline Mode', 'Last Reservation.8', 'Alteon GEL Automation', 'Last Reservation.9']]
+
+    return df_merge_full
+
+
+if __name__ == '__main__':
+    # get arguments
+    args = sys.argv[1:]
+    portal_ip_nj = args[0]
+    portal_ip_de = args[1]
+    portal_db_name = args[2]
+    portal_usr = args[3]
+    portal_pass = args[4]
+    # site = args[4]
+    #
+    # # portal DB connection data
+    # db_connection = get_db_connection(portal_ip, portal_db_name, portal_usr, portal_pass)
+    # if db_connection:
+    #     query = summary_report_query_builder()
+    #     query_data = get_portal_db_data(mysql_connection=db_connection, query=query)
+    #     if query_data:
+    #         # print(query_data)
+    #         save_csv_file(query_data, header_data, path, file_name + "-" + site)
+    #         print("script finished successfully")
+    #     else:
+    #         print("Error in MySQL query")
+    # else:
+    #     print("Error in MySQL Connection")
+
+    query_data_nj = None
+    query_data_de = None
+
+    # NJ portal DB connection data
+    db_connection = get_db_connection(query_data_nj, portal_db_name, portal_usr, portal_pass)
     if db_connection:
         query = summary_report_query_builder()
-        query_data = get_portal_db_data(mysql_connection=db_connection, query=query)
-        if query_data:
-            # print(query_data)
-            save_csv_file(query_data, header_data, path, file_name + "-" + site)
-            print("script finished successfully")
-        else:
-            print("Error in MySQL query")
-    else:
-        print("Error in MySQL Connection")
+        query_data_nj = get_portal_db_data(mysql_connection=db_connection, query=query)
+
+        if query_data_nj:
+            # convert query result to pandas DF
+            df_nj = pd.DataFrame(query_data_nj, columns=header_data)
+
+    # DE portal DB connection data
+    db_connection = get_db_connection(query_data_de, portal_db_name, portal_usr, portal_pass)
+    if db_connection:
+        query = summary_report_query_builder()
+        query_data_de = get_portal_db_data(mysql_connection=db_connection, query=query)
+
+        if query_data_nj:
+            # convert query result to pandas DF
+            df_de = pd.DataFrame(query_data_de, columns=header_data)
+
+    # merge data frames
+    merged_df = merge_queries_data(df_nj=df_nj, df_de=df_de)
+    print(merged_df)
+
