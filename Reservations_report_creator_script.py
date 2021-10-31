@@ -26,12 +26,12 @@ import pandas as pd
 ######## time data #########
 ############################
 
-months_diff = 6
+#months_diff = 6
 # unix time of current time
-now_time = int(time.time())
+#now_time = int(time.time())
 
 # unix time of time in the past (current 6 months ago)
-past_time = int((datetime.today() + relativedelta(months=-months_diff)).timestamp())
+#past_time = int((datetime.today() + relativedelta(months=-months_diff)).timestamp())
 ############################
 
 ############################
@@ -39,14 +39,14 @@ past_time = int((datetime.today() + relativedelta(months=-months_diff)).timestam
 ############################
 
 path = "C:\\inetpub\\FTP_Folder\\"
-file_name = "Reservations_Summary-last_" + str(months_diff) + "_months"
+#file_name = "Reservations_Summary-last_" + str(months_diff) + "_months"
 
 ############################
 ## portal DB Query's data ##
 ############################
 header_data = ['User Name', 'Manager', 'Region', 'Location', 'Reservations Total Count',
-               'Alteon and Analytics', 'Last Reservation', 'Alteon Ansible Automation', 'Last Reservation', 'Alteon Cloud Controller', 'Last Reservation', 'Virtual DefensePro', 'Last Reservation', 'SSL Inspection', 'Last Reservation',
-               'Appwall', 'Last Reservation', 'Defense Flow', 'Last Reservation', 'KWAF - ExtAuth', 'Last Reservation', 'KWAF - Inline Mode', 'Last Reservation', 'Alteon GEL Automation', 'Last Reservation']
+               'Alteon and Analytics', 'Last Reservation', 'Alteon Ansible Automation', 'Last Reservation.1', 'Alteon Cloud Controller', 'Last Reservation.2', 'Virtual DefensePro', 'Last Reservation.3', 'SSL Inspection', 'Last Reservation.4',
+               'Appwall', 'Last Reservation.5', 'Defense Flow', 'Last Reservation.6', 'KWAF - ExtAuth', 'Last Reservation.7', 'KWAF - Inline Mode', 'Last Reservation.8', 'Alteon GEL Automation', 'Last Reservation.9']
 
 regions_lst = ["'APAC'", "'EMEA & CALA'", "'North America'", "'EMEA & CALA', 'APAC', 'North America'"]
 ############################
@@ -72,11 +72,17 @@ regions_lst = ["'APAC'", "'EMEA & CALA'", "'North America'", "'EMEA & CALA', 'AP
 #    args = parser.parse_args()
 #    return args
 
-def summary_report_query_builder(region_code=3):
+def summary_report_query_builder(region_code=3, months_diff=6):
+    # unix time of current time
+    now_time = int(time.time())
+
+    # unix time of time in the past
+    past_time = int((datetime.today() + relativedelta(months=-months_diff)).timestamp())
+    print("sent with time diff of: " + str(months_diff))
     lab_lst = [('Alteon and Analytics', 'AAAnalytics_col'), ('Alteon Ansible Automation', 'AAAutomation_col'), (('Alteon Cloud Controller', 'Alteon Cloud Controller - Demo', 'Alteon Cloud Controller - Training'), 'ACController_col'), ('Virtual DefensePro', 'VDP_col'), ('SSL Inspection', 'SSLI_col'), ('Appwall', 'APPW_col'), ('Defense Flow', 'DF_col'), (('KWAF - ExtAuth', 'KWAF - External Authorization Mode'), 'KWAFEA_col'), ('KWAF - Inline Mode', 'KWAFIN_col'), (('Global Elastic License (GEL)', 'Alteon GEL Automation'), 'GEL_col')]
 
     query =  "SELECT\n" + \
-             "Employees.Full_Name, Employees.Manager," + ("Employees.Region," if region_code == 3 else "") + " Employees.Location, IF(total_by_time.Count IS NULL, 0, total_by_time.Count) AS 'Reservations Total Count'"
+             "Employees.Full_Name, Employees.Manager, Employees.Region, Employees.Location, IF(total_by_time.Count IS NULL, 0, total_by_time.Count) AS 'Reservations Total Count'"
 
     for lab in lab_lst:
         query += ",\nIF(" + lab[1] + ".Count IS NULL, 0, " + lab[1] + ".Count) AS '" + (str(lab[0]) if isinstance(lab[0], str) else lab[0][0]) + "', IF(" + lab[1] + "2.Last_Res IS NULL, '', DATE_FORMAT(MAX(" + lab[1] + "2.Last_Res), '%Y/%m/%d %H:%i:%S')) AS 'Last Reservation'"
@@ -108,6 +114,16 @@ def save_csv_file(data, header, path, fn):
         writer = csv.writer(f)
         # write the header
         writer.writerow(header)
+
+        # write multiple rows
+        writer.writerows(data)
+
+def save_csv_file2(data, path, fn):
+    # open the file in the write mode
+    with open(path + fn + ".csv", 'w', newline='') as f:
+        writer = csv.writer(f)
+        # write the header
+        #writer.writerow(header)
 
         # write multiple rows
         writer.writerows(data)
@@ -149,11 +165,9 @@ def get_portal_db_data(mysql_connection, query):
             print("MySQL connection is closed")
 
 
-def merge_queries_data(df_nj, df_de):
-    # import data
-    df_nj = pd.read_csv("/usr/data/Reservations_Summary-last_6_months-NJ.csv", encoding="ISO-8859-1")
-    df_de = pd.read_csv('/usr/data/Reservations_Summary-last_6_months-DE.csv', encoding="ISO-8859-1")
-
+def merge_queries_data(table1, table2, include_region=True):
+    df1 = pd.DataFrame(table1, columns=header_data)
+    df2 = pd.DataFrame(table2, columns=header_data)
     # fix data types of last reservations to datetime
     last_reservations_col_lst = ['Last Reservation', 'Last Reservation.1', 'Last Reservation.2',
                                  'Last Reservation.3', 'Last Reservation.4', 'Last Reservation.5', 'Last Reservation.6',
@@ -161,14 +175,14 @@ def merge_queries_data(df_nj, df_de):
                                  'Last Reservation.8', 'Last Reservation.9']
 
     for col in last_reservations_col_lst:
-        df_nj[col] = pd.to_datetime(df_nj[col])
-        df_de[col] = pd.to_datetime(df_de[col])
+        df1[col] = pd.to_datetime(df1[col])
+        df2[col] = pd.to_datetime(df2[col])
 
     # set size of dataframe output to max
-    pd.set_option("display.max_rows", None, "display.max_columns", None)
+    # pd.set_option("display.max_rows", None, "display.max_columns", None)
 
     # merge the 2 data frames
-    df_merge = pd.concat([df_nj, df_de])
+    df_merge = pd.concat([df1, df2])
 
     # create 2 data frames for each data type (int, date) and group them by 'User Name'
     df_merge_count = df_merge.groupby('User Name')[
@@ -188,8 +202,17 @@ def merge_queries_data(df_nj, df_de):
          'Virtual DefensePro', 'Last Reservation.3', 'SSL Inspection', 'Last Reservation.4', 'Appwall',
          'Last Reservation.5', 'Defense Flow', 'Last Reservation.6', 'KWAF - ExtAuth', 'Last Reservation.7',
          'KWAF - Inline Mode', 'Last Reservation.8', 'Alteon GEL Automation', 'Last Reservation.9']]
-
+    if not include_region:
+        print("region dropped")
+        df_merge_full.drop('Region', axis=1, inplace=True)
+    # restore columns names as original
+    df_merge_full.columns = df_merge_full.columns.str.split('.').str[0]
+    #print(df_merge_full)
     return df_merge_full
+
+
+def save_pd_df_to_csv(df, path, f_name):
+    df.to_csv(path + f_name + ".csv", encoding='utf-8-sig')
 
 
 if __name__ == '__main__':
@@ -220,26 +243,26 @@ if __name__ == '__main__':
     query_data_de = None
 
     # NJ portal DB connection data
-    db_connection = get_db_connection(query_data_nj, portal_db_name, portal_usr, portal_pass)
+    db_connection = get_db_connection(portal_ip_nj, portal_db_name, portal_usr, portal_pass)
     if db_connection:
         query = summary_report_query_builder()
         query_data_nj = get_portal_db_data(mysql_connection=db_connection, query=query)
 
         if query_data_nj:
             # convert query result to pandas DF
-            df_nj = pd.DataFrame(query_data_nj, columns=header_data)
+            df_ = pd.DataFrame(query_data_nj, columns=header_data)
 
-    # DE portal DB connection data
-    db_connection = get_db_connection(query_data_de, portal_db_name, portal_usr, portal_pass)
-    if db_connection:
-        query = summary_report_query_builder()
-        query_data_de = get_portal_db_data(mysql_connection=db_connection, query=query)
+            # DE portal DB connection data
+            db_connection = get_db_connection(portal_ip_de, portal_db_name, portal_usr, portal_pass)
+            if db_connection:
+                query = summary_report_query_builder()
+                query_data_de = get_portal_db_data(mysql_connection=db_connection, query=query)
 
-        if query_data_nj:
-            # convert query result to pandas DF
-            df_de = pd.DataFrame(query_data_de, columns=header_data)
+                if query_data_de:
+                    # convert query result to pandas DF
+                    df_de = pd.DataFrame(query_data_de, columns=header_data)
 
-    # merge data frames
-    merged_df = merge_queries_data(df_nj=df_nj, df_de=df_de)
-    print(merged_df)
+            # merge data frames
+            merged_df = merge_queries_data(df_nj=table1, df_de=df_de)
+            print(merged_df)
 
