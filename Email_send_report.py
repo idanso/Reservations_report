@@ -1,34 +1,51 @@
-import os
+import base64
 import smtplib
-import imghdr
+import requests
 from email.message import EmailMessage
 
-EMAIL_ADDRESS = os.environ.get('EMAIL_USER')
-EMAIL_PASSWORD = os.environ.get('EMAIL_PASS')
+
+# Arguments
+EMAIL_ADDRESS = 'email@email.com'
+contacts = ['contact@email.com']
+PATH_TO_CSV_FILE = 'path of file attachment'
+FILE_NAME = 'file name attachment'
+SMTP_SEVER = 'smtp.com'
+password = 'smtp server password'
+URL_GET_FILE = 'url_get_file'
 
 
-contacts = ['idanso@radware.com']
+def send_mail():
+    message = EmailMessage()
+    message['Subject'] = 'DemoLabs Reservations Monthly Report'
+    message['From'] = EMAIL_ADDRESS
+    message['To'] = contacts
 
-msg = EmailMessage()
-msg['Subject'] = 'DemoLabs Reservations Monthly Report'
-msg['From'] = EMAIL_ADDRESS
-msg['To'] = contacts
+    # create message body as html
+    message.add_alternative("""\
+    <!DOCTYPE html>
+    <html>
+        email body
+    </html>
+    """, subtype='html')
 
-msg.set_content('Users reservations summary file attached')
+    # get report csv file from web server
+    result = requests.get(URL_GET_FILE)
 
-msg.add_alternative("""\
-<!DOCTYPE html>
-<html>
-    <body>
-        <h1 style="color:SlateGray;">This is an HTML Email!</h1>
-    </body>
-</html>
-""", subtype='html')
+    # get report csv file from local disk
+    # with open(PATH_TO_CSV_FILE + FILE_NAME, 'rb') as f:  # new
+    #     file_data = f.read()
 
-with smtplib.SMTP_SSL('smtp address') as smtp:
-    smtp.send_message(msg)
-    smtp.quit()
+    # add report csv file as attachment to message
+    message.add_attachment(result.content, maintype='application', subtype='octet-stream', filename=FILE_NAME)
 
-# with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-#     smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-#     smtp.send_message(msg)
+    # send message via smtp
+    with smtplib.SMTP(host=SMTP_SEVER, port=587) as smtp:
+        smtp.ehlo()
+        smtp.starttls()
+        smtp.login(EMAIL_ADDRESS, password)
+        smtp.send_message(message)
+        smtp.quit()
+
+
+if __name__ == "__main__":
+    send_mail()
