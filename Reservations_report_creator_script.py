@@ -207,12 +207,16 @@ def merge_queries_data(table1, table2, include_region=True):
         df_merge_full.drop('Region', axis=1, inplace=True)
     # restore columns names as original
     df_merge_full.columns = df_merge_full.columns.str.split('.').str[0]
+    # sort df
+    df_merge_full = df_merge_full.sort_values(by='Reservations Total Count', ascending=False)
     #print(df_merge_full)
     return df_merge_full
 
 
 def save_pd_df_to_csv(df, path, f_name):
     df.to_csv(path + f_name + ".csv", encoding='utf-8-sig')
+
+def
 
 
 if __name__ == '__main__':
